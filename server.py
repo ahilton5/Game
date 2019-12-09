@@ -1,8 +1,5 @@
 #!/usr/bin/python3
 
-# By Alden Hilton
-# For usage, run python3 server.py -h
-
 from bottle import route, run, template, static_file, request, get, response, redirect
 from time import sleep
 import numpy as np
@@ -12,14 +9,6 @@ import json
 import IPy
 import sys
 import os
-
-# # Set up command-line instructions
-# parser = argparse.ArgumentParser()
-# parser.add_argument('saveto', help='The name of the file to save the output (html) to.')
-# parser.add_argument('--host', help='The IP address of the host. If not provided, a web interface will be opened.', default='')
-# parser.add_argument('--ports', help='The range of ports to be searched (inclusive). For example: "--ports 5,10-1000". If not provided, a web interface will be opened.', default='')
-# parser.add_argument('--timeout', help='The default timeout for each query. Defaults to 1 (second)', default=1, type=int)
-# args = parser.parse_args()
 
 # Constants
 PLAYING = 1
