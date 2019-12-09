@@ -147,43 +147,6 @@ const initialize = () => {
     gameState = PAUSED;
     blueDirection = RIGHT;
     greenDirection = LEFT;    
-    let main = document.querySelector("main");
-    /* 
-     * Create a 50 by 20 grid.
-     * Define (0, 0) to be the bottom left corner of grid.
-     * Define (49, 19) to be the top right corner of grid.
-    */
-    board = new Array(50);
-    for (let x = 0; x < 50; x++) {
-        board[x] = new Array(20);
-        for (let y = 0; y < 20; y++) {
-            board[x][y] = document.createElement("div");
-            board[x][y].classList.add("unit");
-        }
-    }
-    for (let y = 19; y >= 0; y--) {
-        for (let x = 0; x < 50; x++) {
-            main.appendChild(board[x][y]);
-        }
-    }
-    for (let x = 1; x < 4; x++) {
-        switchColors("blue");
-        claimUnit(board[x][9]);
-        claimUnit(board[x][10]);
-        claimUnit(board[x][11]);
-    }
-    blueX = 2;
-    blueY = 10;
-    moveBlueToCoordinate(2, 10);
-    for (let x = 46; x < 49; x++) {
-        switchColors("green");
-        claimUnit(board[x][9]);
-        claimUnit(board[x][10]);
-        claimUnit(board[x][11]);
-    }
-    greenX = 47;
-    greenY = 10;
-    moveGreenToCoordinate(47, 10);
     document.querySelector("#dialog").style.display = "none";
 };
 
