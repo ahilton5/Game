@@ -11,17 +11,25 @@
 </head>
 <body>
     <main>
-        %for row in range(board.shape[0]):
-            %for col in range(board.shape[1]):
+        %for row in range(len(board[0])):
+            %for col in range(len(board)):
                 <%
-                    if board[row, col] == states['blue']:
+                    if board[col][row] == states['blue']:
                         class_list = 'unit blue'
-                    elif board[row, col] == states['blue_current']:
+                    elif board[col][row] == states['blue_current']:
                         class_list = 'unit blue current'
-                    elif board[row, col] == states['green']:
+                    elif board[col][row] == states['blue_tail']:
+                        class_list = 'unit blue_tail'
+                    elif board[col][row] == states['blue_current_tail']:
+                        class_list = 'unit blue_tail current'
+                    elif board[col][row] == states['green']:
                         class_list = 'unit green'
-                    elif board[row, col] == states['green_current']:
+                    elif board[col][row] == states['green_current']:
                         class_list = 'unit green current'
+                    elif board[col][row] == states['green_tail']:
+                        class_list = 'unit green_tail'
+                    elif board[col][row] == states['green_current_tail']:
+                        class_list = 'unit green_tail current'
                     else:
                         class_list = 'unit'
                     end
@@ -39,7 +47,7 @@
     <div id="dialog">
         <div id="dialog-content">
             <h2>Javasript Error -- Unable to load page</h2>
-            <form>
+            <form method="GET" action="/reset">
                 <button>Reset</button>
             </form>
         </div>

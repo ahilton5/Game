@@ -1,315 +1,165 @@
 let PLAYING = 1;
 let PAUSED = 0;
 let DONE = 2;
-let LEFT = 0;
-let UP = 1;
-let RIGHT = 2;
-let DOWN = 3;
-
-let gameState;
-let blueDirection;
-let greenDirection;
-let blueX;
-let blueY;
-let greenX;
-let greenY;
-let board;
-let currentColor;
-let currentColorTail;
-let otherColor;
-let otherColorTail;
-
-const isInBounds = (x, y) => {
-    if (x < 0 || x == 50 || y < 0 || y == 20) return false;
-    else return true;
-}
-
-const isValidPath = (x, y, itteration) => {
-    let originalX = x;
-    let originalY = y;
-    let isEnclosedUp = false;
-    let isEnclosedRight = false;
-    let isEnclosedDown = false;
-    let isEnclosedLeft = false;
-    if (itteration > 4) return true;
-    for (x = originalX; x < 50; x++) {
-        if (board[x][y].classList.contains(currentColor) || board[x][y].classList.contains(currentColorTail)) {
-            isEnclosedRight = isValidPath(x - 1, y, itteration + 1);
-            break;
-        }
-    }
-    if (!isEnclosedRight) return false;
-    for (x = originalX; x >= 0; x--) {
-        if (board[x][y].classList.contains(currentColor) || board[x][y].classList.contains(currentColorTail)) {
-            isEnclosedLeft = isValidPath(x + 1, y, itteration + 1);
-            break;
-        }
-    }
-    if (!isEnclosedLeft) return false;
-    x = originalX;
-    for (y = originalY; y < 20; y++) {
-        if (board[x][y].classList.contains(currentColor) || board[x][y].classList.contains(currentColorTail)) {
-            isEnclosedUp = isValidPath(x, y - 1, itteration + 1);
-            break;
-        }
-    }
-    if (!isEnclosedUp) return false;
-    for (y = originalY; y >= 0; y--) {
-        if (board[x][y].classList.contains(currentColor) || board[x][y].classList.contains(currentColorTail)) {
-            isEnclosedDown = isValidPath(x, y + 1, itteration + 1);
-            break;
-        }
-    }
-    if (!isEnclosedDown) return false;
-    return (isEnclosedDown && isEnclosedLeft && isEnclosedRight && isEnclosedUp);
-}
-
-const claimRange = (x, y) => {
-    if (x < 0) x = 49;
-    else if (x > 49) x = 0;
-    if (y < 0) y = 19;
-    else if (y > 19) y = 0;
-    if (board[x][y].classList.contains(currentColor)) return;
-    if (board[x][y].classList.contains(currentColorTail) || isValidPath(x, y, 1)) {
-        claimUnit(board[x][y]);
-        claimRange(x - 1, y);
-        claimRange(x + 1, y);
-        claimRange(x, y - 1);
-        claimRange(x, y + 1);
-    }
-}
-
-const claimUnit = (div) => {
-    div.classList.remove(otherColor);
-    div.classList.remove(otherColorTail);
-    div.classList.remove(currentColorTail);
-    div.classList.add(currentColor);
-}
-
-const switchColors = (color) => {
-    if (color == "green") {
-        currentColor = "green";
-        currentColorTail = "green_tail";
-        otherColor = "blue";
-        otherColorTail = "blue_tail";
-    }
-    else {
-        currentColor = "blue";
-        currentColorTail = "blue_tail";
-        otherColor = "green";
-        otherColorTail = "green_tail";
-    }
-}
-
-const moveGreenToCoordinate = (x, y) => {
-    board[greenX][greenY].classList.remove("current");
-    greenX = x;
-    greenY = y;
-    switchColors("green");
-    finishMove(x, y);
-}
-
-const moveBlueToCoordinate = (x, y) => {
-    board[blueX][blueY].classList.remove("current");
-    blueX = x;
-    blueY = y;
-    switchColors("blue");
-    finishMove(x, y);
-}
-
-const finishMove = (x, y) => {
-    board[x][y].classList.add("current");
-    if (board[x][y].classList.contains(currentColorTail)) {
-        //showDialog(otherColor + " won!");
-        board[x][y].classList.add(currentColorTail);
-        regenerate(currentColor);
-    }
-    else if (board[x][y].classList.contains(otherColorTail)) {
-       // showDialog(currentColor + " won!");
-       if (!board[x][y].classList.contains(currentColor)) {
-        board[x][y].classList.add(currentColorTail);
-       }
-       regenerate(otherColor);
-    }
-    else if(!board[x][y].classList.contains(currentColor)) {
-        board[x][y].classList.add(currentColorTail);
-    }
-    else {
-        claimRange(x - 1, y);
-        claimRange(x + 1, y);
-        claimRange(x, y - 1);
-        claimRange(x, y + 1);
-        updatePlayerScore(currentColor, false);
-    }
-}
+let LEFT = "left";
+let UP = "up";
+let RIGHT = "right";
+let DOWN = "down";
+let timer;
 
 const initialize = () => {
-    gameState = PAUSED;
-    blueDirection = RIGHT;
-    greenDirection = LEFT;    
     document.querySelector("#dialog").style.display = "none";
+    let xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            nseconds = JSON.parse(this.responseText)['nseconds'];
+            timer = setInterval(sync, nseconds);
+        } 
+      };
+      xhttp.open("GET", "/nseconds", true);
+      xhttp.send();
 };
 
-const advanceBlue = () => {
-    switch(blueDirection) {
-        case LEFT: 
-            if (blueX > 0) {
-                moveBlueToCoordinate(blueX - 1, blueY);
-            }
-            else {
-                moveBlueToCoordinate(49, blueY);
-            }
-            break;
-        case UP:
-            if (blueY != 19) {
-                moveBlueToCoordinate(blueX, blueY + 1);
-            }
-            else {
-                moveBlueToCoordinate(blueX, 0);
-            }
-            break;
-        case RIGHT:
-            if (blueX != 49) {
-                moveBlueToCoordinate(blueX + 1, blueY);
-            }
-            else {
-                moveBlueToCoordinate(0, blueY);
-            }
-            break;
-        case DOWN:
-            if (blueY != 0) {
-                moveBlueToCoordinate(blueX, blueY - 1);
-            }
-            else {
-                moveBlueToCoordinate(blueX, 19);
-            }
-            break;
-    }
+const change_dir = (dir) => {
+    let xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          board = JSON.parse(this.responseText)['board'];
+          let squares = document.querySelectorAll('.unit');
+          for (let x = 0; x < 50; x++) {
+              for (let y = 0; y < 20; y++) {
+                  // console.log(board[x][y])
+                  if (board[x][y] == 0) {
+                      squares[x + y*50].className = "unit";
+                  }
+                  else if (board[x][y] == 1) {
+                      // blue
+                      squares[x + y*50].className = "unit blue";
+                  }
+                  else if (board[x][y] == 2) {
+                      // blue tail
+                      squares[x + y*50].className = "unit blue_tail";
+                  }
+                  else if (board[x][y] == 3) {
+                      // blue current
+                      squares[x + y*50].className = "unit blue current";
+                  }
+                  else if (board[x][y] == 4) {
+                      // blue current tail
+                      squares[x + y*50].className = "unit blue_tail current";
+                  }
+                  else if (board[x][y] == 5) {
+                      // green
+                      squares[x + y*50].className = "unit green"
+                  }
+                  else if (board[x][y] == 6) {
+                      // green tail
+                      squares[x + y*50].className = "unit green_tail";
+                  }
+                  else if (board[x][y] == 7) {
+                      // green current
+                      squares[x + y*50].className = "unit green current";
+                  }
+                  else if (board[x][y] == 8) {
+                      // green current tail
+                      squares[x + y*50].className = "unit green_tail current";
+                  }
+                  else {
+                      console.log(board[x][y]);
+                  }
+              }
+          }
+        }
+      };
+      xhttp.open("GET", "/change_dir?player=green&direction=" + dir, true);
+      xhttp.send();
 }
 
-const advanceGreen = () => {
-    switch(greenDirection) {
-        case LEFT: 
-            if (greenX > 0) {
-                moveGreenToCoordinate(greenX - 1, greenY);
-            }
-            else {
-                moveGreenToCoordinate(49, greenY);
-            }
-            break;
-        case UP:
-            if (greenY != 19) {
-                moveGreenToCoordinate(greenX, greenY + 1);
-            }
-            else {
-                moveGreenToCoordinate(greenX, 0);
-            }
-            break;
-        case RIGHT:
-            if (greenX != 49) {
-                moveGreenToCoordinate(greenX + 1, greenY);
-            }
-            else {
-                moveGreenToCoordinate(0, greenY);
-            }
-            break;
-        case DOWN:
-            if (greenY != 0) {
-                moveGreenToCoordinate(greenX, greenY - 1);
-            }
-            else {
-                moveGreenToCoordinate(greenX, 19);
-            }
-            break;
-    }
-}
-
-
-const advance = () => {
-    let random = Math.floor(Math.random() * 2);
-    if (random == 0) {
-        advanceBlue();
-        advanceGreen();
-    }
-    else {
-        advanceGreen();
-        advanceBlue();
-    }
-}
-
-async function regenerate(color) {
-    updatePlayerScore(color, true);
-    let tail;
-    if (color == "blue") tail = "blue_tail";
-    else tail = "green_tail";
-    for (let x = 0; x < 50; x++) {
-        for (let y = 0; y < 20; y++) {
-            if (board[x][y].classList.contains(color)) {
-                board[x][y].classList.remove(color);
-            }
-            if (board[x][y].classList.contains(tail)) {
-                board[x][y].classList.remove(tail);
+const sync = () => {
+    let xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        board = JSON.parse(this.responseText)['board'];
+        let squares = document.querySelectorAll('.unit');
+        let ngreen = 0
+        let nblue = 0
+        for (let x = 0; x < 50; x++) {
+            for (let y = 0; y < 20; y++) {
+                // console.log(board[x][y])
+                if (board[x][y] == 0) {
+                    squares[x + y*50].className = "unit";
+                }
+                else if (board[x][y] == 1) {
+                    // blue
+                    squares[x + y*50].className = "unit blue";
+                    nblue += 1
+                }
+                else if (board[x][y] == 2) {
+                    // blue tail
+                    squares[x + y*50].className = "unit blue_tail";
+                }
+                else if (board[x][y] == 3) {
+                    // blue current
+                    squares[x + y*50].className = "unit blue current";
+                    nblue += 1
+                }
+                else if (board[x][y] == 4) {
+                    // blue current tail
+                    squares[x + y*50].className = "unit blue_tail current";
+                }
+                else if (board[x][y] == 5) {
+                    // green
+                    squares[x + y*50].className = "unit green"
+                    ngreen += 1
+                }
+                else if (board[x][y] == 6) {
+                    // green tail
+                    squares[x + y*50].className = "unit green_tail";
+                }
+                else if (board[x][y] == 7) {
+                    // green current
+                    squares[x + y*50].className = "unit green current";
+                    ngreen += 1
+                }
+                else if (board[x][y] == 8) {
+                    // green current tail
+                    squares[x + y*50].className = "unit green_tail current";
+                }
+                else {
+                    console.log(board[x][y]);
+                }
             }
         }
-    }
-    let randomX = Math.floor(Math.random() * 47) + 1;
-    let randomY = Math.floor(Math.random() * 17) + 1;
-    for (let x = randomX - 1; x <= randomX + 1; x++) {
-        switchColors(color);
-        claimUnit(board[x][randomY - 1]);
-        claimUnit(board[x][randomY]);
-        claimUnit(board[x][randomY + 1]);
-    }
-    if (color == "blue") {
-        board[blueX][blueY].classList.remove("current");
-        blueX = randomX;
-        blueY = randomY;
-        moveBlueToCoordinate(randomX, randomY);
-    }
-    else {
-        board[greenX][greenY].classList.remove("current");
-        greenX = 2;
-        greenY = 10;
-        moveGreenToCoordinate(randomX, randomY);
-    }
+        updatePlayerScore("green", ngreen)
+        updatePlayerScore("blue", nblue)
+      }
+    };
+    xhttp.open("GET", "/sync", true);
+    xhttp.send();
 }
 
-const getPlayerTotal = (color, regenerate) => {
-    if (regenerate) {
-        return 9;
-    }
-    let total = 0;
-    for (let x = 0; x < 50; x++) {
-        for (let y = 0; y < 20; y++) {
-            if (board[x][y].classList.contains(color)) {
-                total++;
-            }
-        }
-    }
-    return total;
-}
-
-const updatePlayerScore = (color, regenerate) => {
-    let playerTotal = getPlayerTotal(color, regenerate);
-    let alpha = playerTotal / 1000 + .5;
-    if (color == "blue") {
+const updatePlayerScore = (player, n) => {
+    let alpha = n / 1000 + .5;
+    if (player == "blue") {
         let bar = document.querySelector("#blue-progress");
-        bar.style.width = playerTotal.toString() + "px";
+        bar.style.width = n.toString() + "px";
         bar.style.opacity = alpha.toString();
     }
-    else if (color == "green") {
+    else if (player == "green") {
         let bar = document.querySelector("#green-progress");
-        bar.style.width = playerTotal.toString() + "px";
+        bar.style.width = n.toString() + "px";
         bar.style.opacity = alpha.toString();
     }
-    if (playerTotal >= 500) {
-        showDialog(color + " won!");
+    if (n >= 500) {
+        clearInterval(timer);
+        showDialog(player + " won!");
     }
 }
 
 const showDialog = (winner) => {
-    gameState = DONE;
-    clearInterval(timer)
+    let xhttp = new XMLHttpRequest();
+    xhttp.open("GET", "/pause", true);
+    xhttp.send();
     document.querySelector("#dialog").style.display = "block";
     document.querySelector("h2").innerHTML = winner;
 }
@@ -317,47 +167,31 @@ const showDialog = (winner) => {
 document.onkeydown = function(e){
     // Space Bar
     if(e.keyCode == 32) { 
-        if (gameState == PAUSED) {
-            gameState = PLAYING;
-            timer = setInterval(advance, 150);
-        }
-        else if (gameState == PLAYING) {
-            gameState = PAUSED;
-            clearInterval(timer);
-        }
-        else {
-            document.querySelector("form").submit();
-        }
+        let xhttp = new XMLHttpRequest();
+        xhttp.open("GET", "/pause", true);
+        xhttp.send();
     }
-    // a (blue left)
-    else if (e.keyCode == 65) {
-        blueDirection = LEFT;
-    }
-    // w (blue up)
-    else if (e.keyCode == 87) {
-        blueDirection = UP;
-    }
-    // d (blue right)
-    else if (e.keyCode == 68) {
-        blueDirection = RIGHT;
-    }
-    // s (blue down)
-    else if (e.keyCode == 83) {
-        blueDirection = DOWN;
-    }
-    // left arrow (green left)
+    // left arrow
     else if (e.keyCode == 37) {
-        greenDirection = LEFT;
+        change_dir("left")
     }
-    // up arrow (green up)
+    // up arrow
     else if (e.keyCode == 38) {
-        greenDirection = UP;
+        change_dir("up")
     }
+    // right arrow
     else if (e.keyCode == 39) {
-        greenDirection = RIGHT;
+        change_dir("right")
     }
+    // down arrow
     else if (e.keyCode == 40) {
-        greenDirection = DOWN;
+        change_dir("down")
+    }
+    // esc
+    else if (e.keyCode == 27) {
+        let xhttp = new XMLHttpRequest();
+        xhttp.open("GET", "/reset", true);
+        xhttp.send();
     }
 }
 
