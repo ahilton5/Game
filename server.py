@@ -3,7 +3,7 @@
 from bottle import route, run, template, static_file, request, get, response, redirect
 from threading import Thread
 from time import sleep
-import webbrowser
+# import webbrowser
 import argparse
 import random
 import json

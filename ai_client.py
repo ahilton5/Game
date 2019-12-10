@@ -28,7 +28,7 @@ def player_score(player):
 def isRunning():
     return requests.get('http://localhost:8088/is_running').json()['running']
     
-nseconds = requests.get('http://localhost:8088/nseconds').json()['nseconds']
+sleeptime = requests.get('http://localhost:8088/nseconds').json()['nseconds']
 
 def sync():
     global board
@@ -48,4 +48,4 @@ while True:
         print(f'Green\'s score: {player_score("green")}')
         print(f'Blue (AI)\'s score: {player_score("blue")}')
         change_dir(get_move())
-    time.sleep(nseconds)
+    time.sleep(sleeptime)
