@@ -7,6 +7,7 @@ R = 1
 D = 2
 L = 3
 
+steps = {0: 'up', 1: 'right', 2: 'down', 3: 'left'}
 
 class SimulatedAnnealing:
 
@@ -28,7 +29,7 @@ class SimulatedAnnealing:
                 next_move = randint(0, 3)
                 # choose a move that is not backwards
                 if i:
-                    while next_move == solution[i-1]:
+                    while next_move == (solution[i-1] + 2) % 4:
                         next_move = randint(0, 3)
                 else:
                     while next_move == prev:
@@ -44,7 +45,7 @@ class SimulatedAnnealing:
                     next_move = randint(0, 3)
                     # choose a move that is not backwards
                     if i:
-                        while next_move == solution[i - 1]:
+                        while next_move == (solution[i-1] + 2) % 4:
                             next_move = randint(0, 3)
                     else:
                         while next_move == prev:
@@ -73,7 +74,9 @@ class SimulatedAnnealing:
         results = {}
         if board:
             self.set_board(board)
-        self.prev = self.state.get_prev(self.me)
+        # self.prev = self.state.get_prev(self.me)
+        if self.prev:
+            print(f"\nprevious = {steps[self.prev]}")
         num_solutions = 0
         # Just copied the values off one of the tutorials for the initial temp and cooling rate;
         # feel free to play with these
@@ -109,6 +112,16 @@ class SimulatedAnnealing:
         # results['total'] = None
         # results['pruned'] = None
 
+        i = 0
+        while not self.state.checkmove(bssf[0], self.me) and i < 4:
+            bssf[0] = (bssf[0] + 1) % 4
+            i += 1
+
+        if i < 4:
+            print(f"{steps[bssf[0]]} is a good move")
+        else:
+            print(f"{steps[bssf[0]]} is a BAD move")
+
         self.prev = (bssf[0] + 2) % 4
         return bssf[0]
 
@@ -140,6 +153,25 @@ class SimulatedAnnealing:
             self.g_pos = [0, 0]
 
             self.set_board(board)
+
+        def checkmove(self, move, player):
+            if player == self.BLUE_PLAYER:
+                pos = self.b_pos
+                check = self.states['blue_tail']
+            else:
+                pos = self.g_pos
+                check = self.states['green_tail']
+
+            if move == U and self.board[pos[0]][(pos[1] - 1) % len(self.board[0])] == check:
+                return False
+            if move == D and self.board[pos[0]][(pos[1] + 1) % len(self.board[0])] == check:
+                return False
+            if move == R and self.board[(pos[0] + 1) % len(self.board)][pos[1]] == check:
+                return False
+            if move == L and self.board[(pos[0] - 1) % len(self.board)][pos[1]] == check:
+                return False
+
+            return True
 
         def set_board(self, board):
             self.board = board.copy()
@@ -202,9 +234,9 @@ class SimulatedAnnealing:
                 self.board[pos[0]][pos[1]] = color
 
                 if step == U:
-                    pos[1] = (pos[1] + 1) % len(self.board[0])
-                elif step == D:
                     pos[1] = (pos[1] - 1) % len(self.board[0])
+                elif step == D:
+                    pos[1] = (pos[1] + 1) % len(self.board[0])
                 elif step == R:
                     pos[0] = (pos[0] + 1) % len(self.board)
                 else:
@@ -217,9 +249,9 @@ class SimulatedAnnealing:
                 self.board[pos[0]][pos[1]] = tail
 
                 if step == U:
-                    pos[1] = (pos[1] + 1) % len(self.board[0])
-                elif step == D:
                     pos[1] = (pos[1] - 1) % len(self.board[0])
+                elif step == D:
+                    pos[1] = (pos[1] + 1) % len(self.board[0])
                 elif step == R:
                     pos[0] = (pos[0] + 1) % len(self.board)
                 else:
