@@ -69,4 +69,3 @@ while True:
         print(f'Blue (AI)\'s score: {player_score("blue")}')
         change_dir(get_move())
     time.sleep(sleeptime)
-    

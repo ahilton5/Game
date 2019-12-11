@@ -170,13 +170,13 @@ class SimulatedAnnealing:
                 pos = self.g_pos
                 check = self.states['green_tail']
 
-            if self.board[pos[0]][pos[1] - 1] == check:
+            if self.board[pos[0]][(pos[1] - 1) % len(self.board[0])] == check:
                 return U
-            if self.board[pos[0]][pos[1] + 1] == check:
+            if self.board[pos[0]][(pos[1] + 1) % len(self.board[0])] == check:
                 return D
-            if self.board[pos[0] - 1][pos[1]] == check:
+            if self.board[(pos[0] - 1) % len(self.board)][pos[1]] == check:
                 return L
-            if self.board[pos[0] + 1][pos[1]] == check:
+            if self.board[(pos[0] + 1) % len(self.board)][pos[1]] == check:
                 return R
 
         def score(self, player):
