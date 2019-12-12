@@ -7,6 +7,9 @@ R = 1
 D = 2
 L = 3
 
+nrows = 20
+ncols = 50
+
 steps = {0: 'up', 1: 'right', 2: 'down', 3: 'left'}
 
 class SimulatedAnnealing:
@@ -58,7 +61,13 @@ class SimulatedAnnealing:
     def cost(self, solution):
         # TODO: Implement
         for step in solution:
-            self.state.apply_step(step, self.me)
+            # self.state.apply_step(step, self.me)
+            BLUE_PLAYER = 0
+            GREEN_PLAYER = 1
+            if self.me == BLUE_PLAYER:
+                self.state.advance(step, 'blue')
+            else:
+                self.state.advance(step, 'green')
 
         # factor 1: your area vs opponents area
         score = self.state.score(self.me)
@@ -69,14 +78,14 @@ class SimulatedAnnealing:
 
         return score
 
-    def anneal(self, board=None, time_allowance=1.0):
+    def anneal(self, board=None, time_allowance=0.1):
         # Simulated annealing!!
         results = {}
         if board:
             self.set_board(board)
         # self.prev = self.state.get_prev(self.me)
-        if self.prev:
-            print(f"\nprevious = {steps[self.prev]}")
+        # if self.prev:
+            # print(f"\nprevious = {steps[self.prev]}")
         num_solutions = 0
         # Just copied the values off one of the tutorials for the initial temp and cooling rate;
         # feel free to play with these
@@ -117,10 +126,10 @@ class SimulatedAnnealing:
             bssf[0] = (bssf[0] + 1) % 4
             i += 1
 
-        if i < 4:
-            print(f"{steps[bssf[0]]} is a good move")
-        else:
-            print(f"{steps[bssf[0]]} is a BAD move")
+        # if i < 4:
+        #     print(f"{steps[bssf[0]]} is a good move")
+        # else:
+        #     print(f"{steps[bssf[0]]} is a BAD move")
 
         self.prev = (bssf[0] + 2) % 4
         return bssf[0]
@@ -184,7 +193,7 @@ class SimulatedAnnealing:
                         self.b_score += 1
                     elif self.board[x][y] == self.states['green'] \
                             or self.board[x][y] == self.states['green_current']:
-                        self.b_score += 1
+                        self.g_score += 1
 
                     if self.board[x][y] == self.states['blue_current_tail'] \
                             or self.board[x][y] == self.states['blue_current']:
@@ -216,7 +225,7 @@ class SimulatedAnnealing:
                 return self.b_score-self.g_score
             return self.g_score-self.b_score
 
-        def apply_step(self, step, player):
+        # def apply_step(self, step, player):
             if player == self.BLUE_PLAYER:
                 color = self.states['blue']
                 pos = self.b_pos
@@ -269,7 +278,7 @@ class SimulatedAnnealing:
             elif self.board[pos[0]][pos[1]] == self.states['blue_tail']:
                 self.erase(self.BLUE_PLAYER)
 
-        def erase(self, player):
+        # def erase(self, player):
             if player == self.BLUE_PLAYER:
                 color = self.states['blue']
                 pos = self.b_pos
@@ -291,7 +300,7 @@ class SimulatedAnnealing:
 
             self.board[pos[0]][pos[1]] = color+2
 
-        def paint(self, player):
+        # def paint(self, player):
             if player == self.BLUE_PLAYER:
                 paint = self.states['blue']
                 check = self.states['blue_tail']
@@ -342,3 +351,141 @@ class SimulatedAnnealing:
 
 
 
+        def enclosed(self, col, row, player, depth):
+            enclosedUp = False
+            enclosedRight = False
+            enclosedLeft = False
+            enclosedDown = False
+            if depth > 4:
+                return True
+            
+            # Enclosed right
+            for c in range(col, ncols):
+                if self.board[c][row] == self.states[player] or self.board[c][row] == self.states[player + '_tail'] or self.board[c][row] == self.states[player + '_current'] or self.board[c][row] == self.states[player + '_current_tail']:
+                    enclosedRight = self.enclosed(c, row, player, depth + 1)
+                    break   
+            if not enclosedRight:
+                return False
+
+            # Enclosed left
+            for c in range(col, -1, -1):
+                if self.board[c][row] == self.states[player] or self.board[c][row] == self.states[player + '_tail'] or self.board[c][row] == self.states[player + '_current'] or self.board[c][row] == self.states[player + '_current_tail']:
+                    enclosedLeft = self.enclosed(c, row, player, depth + 1)
+                    break   
+            if not enclosedLeft:
+                return False
+
+            # Enclosed up
+            for r in range(row, nrows):
+                if self.board[col][r] == self.states[player] or self.board[col][r] == self.states[player + '_tail'] or self.board[col][r] == self.states[player + '_current'] or self.board[col][r] == self.states[player + '_current_tail']:
+                    enclosedUp = self.enclosed(col, r, player, depth + 1)
+                    break    
+            if not enclosedUp:
+                return False
+
+            # Enclosed down
+            for r in range(row, -1, -1):
+                if self.board[col][r] == self.states[player] or self.board[col][r] == self.states[player + '_tail'] or self.board[col][r] == self.states[player + '_current'] or self.board[col][r] == self.states[player + '_current_tail']:
+                    enclosedDown = self.enclosed(col, r, player, depth + 1)
+                    break   
+            if not enclosedDown:
+                return False
+
+            return enclosedDown and enclosedLeft and enclosedRight and enclosedUp
+
+        def claim(self, player):
+            tail = set()
+            for row in range(nrows):
+                for col in range(ncols):
+                    if self.enclosed(col, row, player, 1):
+                        self.board[col][row] = self.states[player]
+                    if self.board[col][row] == self.states[player + '_tail']:
+                        self.board[col][row] = self.states[player]
+            b_score = 0
+            g_score = 0
+            for r in range(nrows):
+                for c in range(ncols):
+                    if self.board[c][r] == self.states['blue'] or self.board[c][r] == self.states['blue_current']:
+                        b_score += 1
+                    if self.board[c][r] == self.states['green'] or self.board[c][r] == self.states['green_current']:
+                        g_score += 1
+            self.b_score = b_score
+            self.g_score = g_score
+
+        def regenerate(self, player):
+            for row in range(nrows):
+                for col in range(ncols):
+                    if self.board[col][row] == self.states[player]:
+                        self.board[col][row] = self.states['unclaimed']
+                    elif self.board[col][row] == self.states[player + '_tail']:
+                        self.board[col][row] = self.states['unclaimed']
+                    elif self.board[col][row] == self.states[player + '_current']:
+                        self.board[col][row] = self.states['unclaimed']
+                    elif self.board[col][row] == self.states[player + '_current_tail']:
+                        self.board[col][row] = self.states['unclaimed']
+                    
+            random_col = randint(1, 48)
+            randow_row = randint(1, 18)
+            for col in range(random_col - 1, random_col + 2):
+                for row in range(randow_row - 1, randow_row + 2):
+                    self.board[col][row] = self.states[player]
+            self.board[random_col][randow_row] = self.states[player + '_current']
+            if player == 'green':
+                self.g_pos = [random_col, randow_row]
+                self.g_score = 9
+            else:
+                self.b_pos = [random_col, randow_row]
+                self.b_score = 9
+
+        def other(self, player):
+            return 'green' if player == 'blue' else 'blue'
+
+        def advance(self, step, player):
+            if player == 'green':
+                pos = self.g_pos
+            else:
+                pos = self.b_pos
+            direction = steps[step]
+            # Set state of old spot
+            last_pos = self.board[pos[0]][pos[1]]
+            if self.board[pos[0]][pos[1]] == self.states[player + '_current']:
+                self.board[pos[0]][pos[1]] = self.states[player]
+            else:
+                self.board[pos[0]][pos[1]] = self.states[player + '_tail']
+
+            # Move to new spot
+            if direction == 'left':
+                col = pos[0]
+                row = pos[1]
+                pos = [(col - 1) % ncols, row]
+            elif direction == 'up':
+                col = pos[0]
+                row = pos[1]
+                pos = [col, (row - 1) % nrows]
+            elif direction == 'right':
+                col = pos[0]
+                row = pos[1]
+                pos = [(col + 1) % ncols, row]
+            elif direction == 'down':
+                row = pos[1]
+                col = pos[0]
+                pos = [col, (row + 1) % nrows]
+
+            # Set state of new spot
+            if self.board[pos[0]][pos[1]] == self.states[player + '_tail']:
+                # You ran over your own tail
+                self.regenerate(player)
+            if self.board[pos[0]][pos[1]] == self.states[self.other(player) + '_tail'] or self.board[pos[0]][pos[1]] == self.states[self.other(player) + '_current_tail']:
+                # You ran over your opponent
+                self.regenerate(self.other(player))
+            if self.board[pos[0]][pos[1]] == self.states[player]:
+                if last_pos != self.states[player + '_current']:
+                    self.claim(player)
+                self.board[pos[0]][pos[1]] = self.states[player + '_current']
+            else:
+                self.board[pos[0]][pos[1]] = self.states[player + '_current_tail']
+
+            if player == 'green':
+                self.g_pos = pos
+            else:
+                self.b_pos = pos

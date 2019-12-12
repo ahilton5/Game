@@ -212,7 +212,51 @@ def advance():
                 # Set state of new spot
                 if board[pos[player][0]][pos[player][1]] == states[player + '_tail']:
                     # You ran over your own tail
-                    regenerate(player)
+                    if player == 'blue':
+                        # AI, so choose a different move
+                        # First go back 
+                        if dirs[player] == 'left':
+                            col = pos[player][0]
+                            row = pos[player][1]
+                            pos[player] = ((col + 1) % ncols, row)
+                        elif dirs[player] == 'up':
+                            col = pos[player][0]
+                            row = pos[player][1]
+                            pos[player] = (col, (row + 1) % nrows)
+                        elif dirs[player] == 'right':
+                            col = pos[player][0]
+                            row = pos[player][1]
+                            pos[player] = ((col - 1) % ncols, row)
+                        elif dirs[player] == 'down':
+                            row = pos[player][1]
+                            col = pos[player][0]
+                            pos[player] = (col, (row - 1) % nrows)
+                        # Choose a new move at random
+                        options = ['right', 'up', 'down', 'left']
+                        options.remove(dirs[player])
+                        dirs[player] = random.choice(options)
+                        # Move to new spot
+                        if dirs[player] == 'left':
+                            col = pos[player][0]
+                            row = pos[player][1]
+                            pos[player] = ((col - 1) % ncols, row)
+                        elif dirs[player] == 'up':
+                            col = pos[player][0]
+                            row = pos[player][1]
+                            pos[player] = (col, (row - 1) % nrows)
+                        elif dirs[player] == 'right':
+                            col = pos[player][0]
+                            row = pos[player][1]
+                            pos[player] = ((col + 1) % ncols, row)
+                        elif dirs[player] == 'down':
+                            row = pos[player][1]
+                            col = pos[player][0]
+                            pos[player] = (col, (row + 1) % nrows)
+                        # Check if the new move is on your tail, if so, regenerate
+                        if board[pos[player][0]][pos[player][1]] == states[player + '_tail']:
+                            regenerate(player)
+                    else:
+                        regenerate(player)
                 if board[pos[player][0]][pos[player][1]] == states[other(player) + '_tail'] or board[pos[player][0]][pos[player][1]] == states[other(player) + '_current_tail']:
                     # You ran over your opponent
                     regenerate(other(player))
